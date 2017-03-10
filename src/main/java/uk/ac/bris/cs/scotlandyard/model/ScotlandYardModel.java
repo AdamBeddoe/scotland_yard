@@ -11,8 +11,8 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.Black;
-import static uk.ac.bris.cs.scotlandyard.model.Ticket.Double;
-import static uk.ac.bris.cs.scotlandyard.model.Ticket.Secret;
+import static uk.ac.bris.cs.scotlandyard.model.Ticket.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,9 +53,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	 			checkDuplicateLocations(detectives);
 	 			checkDuplicateColours(detectives);
-	 			//checkDetectiveTickets(detectives);
+	 			checkDetectiveTickets(detectives);
 	}
 
+	// Checks all detectives for duplicate locations.
 	private void checkDuplicateLocations(List<PlayerConfiguration> detectives) {
 		Set<Integer> locations = new HashSet<>();
 		for(PlayerConfiguration detective : detectives) {
@@ -64,6 +65,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		}
 	}
 
+	// Checks all detectives for duplicate colours.
     private void checkDuplicateColours(List<PlayerConfiguration> detectives) {
         Set<Colour> colours = new HashSet<>();
         for(PlayerConfiguration detective : detectives) {
@@ -72,12 +74,43 @@ public class ScotlandYardModel implements ScotlandYardGame {
         }
     }
 
+	// Validates the tickets of all detectives.
     private void checkDetectiveTickets(List<PlayerConfiguration> detectives) {
-	    for (PlayerConfiguration detective : detectives) {
-	        if (detective.tickets.containsKey(Secret)) throw new IllegalArgumentException("Detective has a Secret ticket");
-            if (detective.tickets.containsKey(Double)) throw new IllegalArgumentException("Detective has a Double ticket");
-        }
+		for (PlayerConfiguration detective : detectives) {
+			validateTicketTypes(detective);
+			if (detective.equals(this.mrX)) validateMrXTickets(detective);
+			else validateOtherDetectiveTickets(detective);
+		}
     }
+
+	// Checks if Mr X has the required number of each ticket.
+	private void validateMrXTickets(PlayerConfiguration detective) {
+		if (detective.tickets.get(Secret) != 5) throw new IllegalArgumentException("Mr X does not have secret ticket");
+		if (detective.tickets.get(Double) != 2) throw new IllegalArgumentException("Mr X does not have double ticket");
+		if (detective.tickets.get(Taxi) != 4) throw new IllegalArgumentException("Mr X does not have 4 Taxi tickets");
+		if (detective.tickets.get(Bus) != 3) throw new IllegalArgumentException("Mr X does not have 3 Bus tickets");
+		if (detective.tickets.get(Underground) != 3) throw new IllegalArgumentException("Mr X does not have 3 Underground tickets");
+
+	}
+
+	// Checks if a standard detective has the required number of each ticket.
+	private void validateOtherDetectiveTickets(PlayerConfiguration detective) {
+		if (detective.tickets.get(Secret) != 0) throw new IllegalArgumentException("Detective has a Secret ticket");
+		if (detective.tickets.get(Double) != 0) throw new IllegalArgumentException("Detective has a Double ticket");
+		if (detective.tickets.get(Taxi) != 11) throw new IllegalArgumentException("Detective does not have 10 Taxi tickets");
+		if (detective.tickets.get(Bus) != 8) throw new IllegalArgumentException("Detective does not have 8 Bus tickets");
+		if (detective.tickets.get(Underground) != 4) throw new IllegalArgumentException("Detective does not have 4 Underground tickets");
+	}
+
+	// Checks if the ticket map of a detective contains all the required ticket types.
+	// Query whether checking length would be enough or whether this is better because of error information.
+    private void validateTicketTypes(PlayerConfiguration detective) {
+		if (!detective.tickets.containsKey(Secret)) throw new IllegalArgumentException("No ticket field for Secret");
+		if (!detective.tickets.containsKey(Double)) throw new IllegalArgumentException("No ticket field for Double");
+		if (!detective.tickets.containsKey(Taxi)) throw new IllegalArgumentException("No ticket field for Taxi");
+		if (!detective.tickets.containsKey(Bus)) throw new IllegalArgumentException("No ticket field for Bus");
+		if (!detective.tickets.containsKey(Underground)) throw new IllegalArgumentException("No ticket field for Underground");
+	}
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
