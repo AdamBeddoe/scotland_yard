@@ -31,7 +31,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private Graph<Integer, Transport> graph;
     private PlayerConfiguration mrX;
     private PlayerConfiguration firstDetective;
-    //private PlayerConfiguration... restOfTheDetectives;
+    private List<PlayerConfiguration> restOfTheDetectives;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -42,7 +42,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
                 this.firstDetective = requireNonNull(firstDetective);
 
                 for(PlayerConfiguration detective : restOfTheDetectives){
-                	detective = requireNonNull(detective);
+                	this.restOfTheDetectives.add(requireNonNull(detective));
 				}
 
 				if (rounds.isEmpty()) {throw new IllegalArgumentException("Empty rounds");}
