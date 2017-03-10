@@ -53,11 +53,12 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	 			checkDuplicateLocations(detectives);
 	 			checkDuplicateColours(detectives);
+	 			//checkDetectiveTickets(detectives);
 	}
 
 	private void checkDuplicateLocations(List<PlayerConfiguration> detectives) {
 		Set<Integer> locations = new HashSet<>();
-		for(PlayerConfiguration detective:detectives) {
+		for(PlayerConfiguration detective : detectives) {
 			if (locations.contains(detective.location)) throw new IllegalArgumentException("Duplicate location");
 			else locations.add(detective.location);
 		}
@@ -65,9 +66,16 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
     private void checkDuplicateColours(List<PlayerConfiguration> detectives) {
         Set<Colour> colours = new HashSet<>();
-        for(PlayerConfiguration detective:detectives) {
+        for(PlayerConfiguration detective : detectives) {
             if (colours.contains(detective.colour)) throw new IllegalArgumentException("Duplicate colour");
             else colours.add(detective.colour);
+        }
+    }
+
+    private void checkDetectiveTickets(List<PlayerConfiguration> detectives) {
+	    for (PlayerConfiguration detective : detectives) {
+	        if (detective.tickets.containsKey(Secret)) throw new IllegalArgumentException("Detective has a Secret ticket");
+            if (detective.tickets.containsKey(Double)) throw new IllegalArgumentException("Detective has a Double ticket");
         }
     }
 
