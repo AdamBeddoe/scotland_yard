@@ -44,6 +44,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
                 for(PlayerConfiguration detective : restOfTheDetectives){
                 	detective = requireNonNull(detective);
 				}
+
+				if (rounds.isEmpty()) {throw new IllegalArgumentException("Empty rounds");}
+	 			if (graph.isEmpty()) {throw new IllegalArgumentException("Empty map (graph)");}
+	 			if (mrX.colour != Black) {throw new IllegalArgumentException("MrX should be Black");}
 	}
 
 	@Override
