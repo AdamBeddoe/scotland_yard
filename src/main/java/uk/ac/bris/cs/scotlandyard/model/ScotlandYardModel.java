@@ -31,6 +31,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private Graph<Integer, Transport> graph;
     private PlayerConfiguration mrX;
     private PlayerConfiguration firstDetective;
+    //private PlayerConfiguration... ;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -39,6 +40,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
                 this.graph = requireNonNull(graph);
                 this.mrX = requireNonNull(mrX);
                 this.firstDetective = requireNonNull(firstDetective);
+
+                for(int j = 0; j < restOfTheDetectives.length; j++){
+                	restOfTheDetectives[j] = requireNonNull(restOfTheDetectives[j]);
+				}
 	}
 
 	@Override
