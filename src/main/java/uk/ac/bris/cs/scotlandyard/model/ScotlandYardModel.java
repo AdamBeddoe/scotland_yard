@@ -31,7 +31,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private Graph<Integer, Transport> graph;
     private PlayerConfiguration mrX;
     private PlayerConfiguration firstDetective;
-    private List<PlayerConfiguration> restOfTheDetectives;
+    private List<PlayerConfiguration> detectives;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -39,15 +39,27 @@ public class ScotlandYardModel implements ScotlandYardGame {
                 this.rounds = requireNonNull(rounds);
                 this.graph = requireNonNull(graph);
                 this.mrX = requireNonNull(mrX);
+                this.detectives.add(mrX);
                 this.firstDetective = requireNonNull(firstDetective);
+                this.detectives.add(firstDetective);
 
-                for(PlayerConfiguration detective : restOfTheDetectives){
-                	this.restOfTheDetectives.add(requireNonNull(detective));
+                for(PlayerConfiguration detective : restOfTheDetectives) {
+                	this.detectives.add(requireNonNull(detective));
 				}
 
-				if (rounds.isEmpty()) {throw new IllegalArgumentException("Empty rounds");}
-	 			if (graph.isEmpty()) {throw new IllegalArgumentException("Empty map (graph)");}
-	 			if (mrX.colour != Black) {throw new IllegalArgumentException("MrX should be Black");}
+				if (rounds.isEmpty()) throw new IllegalArgumentException("Empty rounds");
+	 			if (graph.isEmpty()) throw new IllegalArgumentException("Empty map (graph)");
+	 			if (mrX.colour != Black) throw new IllegalArgumentException("MrX should be Black");
+
+	 			checkDuplicateLocations(detectives);
+	}
+
+	private void checkDuplicateLocations(List<PlayerConfiguration> detectives) {
+		Set<Integer> locations = new HashSet<>();
+		for(PlayerConfiguration detective:detectives) {
+			if (locations.contains(detective.location)) throw new IllegalArgumentException("Duplicate location");
+			else locations.add(detective.location);
+		}
 	}
 
 	@Override
