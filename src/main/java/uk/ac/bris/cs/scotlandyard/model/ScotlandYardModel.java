@@ -31,7 +31,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private Graph<Integer, Transport> graph;
     private PlayerConfiguration mrX;
     private PlayerConfiguration firstDetective;
-    private List<PlayerConfiguration> detectives;
+    private List<PlayerConfiguration> detectives = new ArrayList<PlayerConfiguration>();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
