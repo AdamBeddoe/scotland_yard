@@ -52,6 +52,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	 			if (mrX.colour != Black) throw new IllegalArgumentException("MrX should be Black");
 
 	 			checkDuplicateLocations(detectives);
+	 			checkDuplicateColours(detectives);
 	}
 
 	private void checkDuplicateLocations(List<PlayerConfiguration> detectives) {
@@ -61,6 +62,14 @@ public class ScotlandYardModel implements ScotlandYardGame {
 			else locations.add(detective.location);
 		}
 	}
+
+    private void checkDuplicateColours(List<PlayerConfiguration> detectives) {
+        Set<Colour> colours = new HashSet<>();
+        for(PlayerConfiguration detective:detectives) {
+            if (colours.contains(detective.colour)) throw new IllegalArgumentException("Duplicate colour");
+            else colours.add(detective.colour);
+        }
+    }
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
