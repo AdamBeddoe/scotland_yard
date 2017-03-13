@@ -162,8 +162,19 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public int getPlayerLocation(Colour colour) {
-		// TODO
-		throw new RuntimeException("Implement me");
+		int location = 0;
+
+		for(PlayerConfiguration detective : detectives) {
+			if(detective.colour.equals(Black)){
+				if(!getRounds().get(getRounds().size()-1)) location = 0;
+				else return detective.location;
+			}
+			else if(detective.colour.equals(colour)) {
+				location = detective.location;
+			}
+		}
+
+		return location;
 	}
 
 	@Override
