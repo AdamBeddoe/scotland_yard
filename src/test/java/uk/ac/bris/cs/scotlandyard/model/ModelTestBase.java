@@ -443,7 +443,7 @@ public abstract class ModelTestBase implements ScotlandYardGameFactory {
 			Set<Move> moves = invocation.getArgument(2);
 			Consumer<Move> callback = invocation.getArgument(3);
 			assertThat(moves).as("[Location %s] trying to select %s from given valid moves of %s",
-					location, moves, move).contains(move);
+					location, move, moves).contains(move);
 			callback.accept(move);
 			return null;
 		};

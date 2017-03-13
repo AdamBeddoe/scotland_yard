@@ -168,8 +168,13 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public int getPlayerTickets(Colour colour, Ticket ticket) {
-		// TODO
-		throw new RuntimeException("Implement me");
+		for(PlayerConfiguration detective : detectives) {
+			if(detective.colour.equals(colour)) {
+				return detective.tickets.get(ticket);
+			}
+		}
+
+		return -1;
 	}
 
 	@Override
