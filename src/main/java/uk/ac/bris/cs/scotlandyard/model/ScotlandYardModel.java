@@ -32,6 +32,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private PlayerConfiguration mrX;
     private PlayerConfiguration firstDetective;
     private List<PlayerConfiguration> detectives = new ArrayList<PlayerConfiguration>();
+    private List<ScotlandYardPlayer> playerList= new ArrayList<ScotlandYardPlayer>();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -54,6 +55,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	 			checkDuplicateLocations(detectives);
 	 			checkDuplicateColours(detectives);
 	 			checkDetectiveTickets(detectives);
+
+	 			for(PlayerConfiguration detective : detectives){
+	 				playerList.add(new ScotlandYardPlayer(detective.player, detective.colour, detective.location, detective.tickets));
+				}
 	}
 
 	// Checks all detectives for duplicate locations.
