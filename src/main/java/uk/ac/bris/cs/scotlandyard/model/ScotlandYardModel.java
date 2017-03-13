@@ -33,6 +33,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private PlayerConfiguration firstDetective;
     private List<PlayerConfiguration> detectives = new ArrayList<PlayerConfiguration>();
     private List<ScotlandYardPlayer> playerList= new ArrayList<ScotlandYardPlayer>();
+    private PlayerConfiguration currentPlayer;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -43,6 +44,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
                 this.detectives.add(mrX);
                 this.firstDetective = requireNonNull(firstDetective);
                 this.detectives.add(firstDetective);
+                this.currentPlayer = mrX;
 
                 for(PlayerConfiguration detective : restOfTheDetectives) {
                 	this.detectives.add(requireNonNull(detective));
@@ -173,8 +175,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public Colour getCurrentPlayer() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return currentPlayer.colour;
 	}
 
 	@Override
