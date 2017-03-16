@@ -85,11 +85,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private void checkDetectiveTickets(List<PlayerConfiguration> detectives) {
 		for (PlayerConfiguration detective : detectives) {
 			validateTicketTypes(detective);
-			if (detective.equals(this.mrX)) validateMrXTickets(detective);
-			else validateOtherDetectiveTickets(detective);
+			if (!detective.equals(this.mrX)) validateOtherDetectiveTickets(detective);
 		}
     }
-
+ /*
 	// Checks if Mr X has the required number of each ticket.
 	private void validateMrXTickets(PlayerConfiguration detective) {
 		if (detective.tickets.get(Secret) != 5) throw new IllegalArgumentException("Mr X does not have secret ticket");
@@ -99,14 +98,14 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		if (detective.tickets.get(Underground) != 3) throw new IllegalArgumentException("Mr X does not have 3 Underground tickets");
 
 	}
-
+*/
 	// Checks if a standard detective has the required number of each ticket.
 	private void validateOtherDetectiveTickets(PlayerConfiguration detective) {
 		if (detective.tickets.get(Secret) != 0) throw new IllegalArgumentException("Detective has a Secret ticket");
 		if (detective.tickets.get(Double) != 0) throw new IllegalArgumentException("Detective has a Double ticket");
-		if (detective.tickets.get(Taxi) != 11) throw new IllegalArgumentException("Detective does not have 10 Taxi tickets");
-		if (detective.tickets.get(Bus) != 8) throw new IllegalArgumentException("Detective does not have 8 Bus tickets");
-		if (detective.tickets.get(Underground) != 4) throw new IllegalArgumentException("Detective does not have 4 Underground tickets");
+		//if (detective.tickets.get(Taxi) != 11) throw new IllegalArgumentException("Detective does not have 10 Taxi tickets");
+		//if (detective.tickets.get(Bus) != 8) throw new IllegalArgumentException("Detective does not have 8 Bus tickets");
+		//if (detective.tickets.get(Underground) != 4) throw new IllegalArgumentException("Detective does not have 4 Underground tickets");
 	}
 
 	// Checks if the ticket map of a detective contains all the required ticket types.
