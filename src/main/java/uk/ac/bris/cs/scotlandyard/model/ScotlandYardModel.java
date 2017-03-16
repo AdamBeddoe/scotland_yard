@@ -34,6 +34,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private List<PlayerConfiguration> detectives = new ArrayList<PlayerConfiguration>();
     private List<ScotlandYardPlayer> playerList= new ArrayList<ScotlandYardPlayer>();
     private PlayerConfiguration currentPlayer;
+    private Set<Move> availableMoves;
     private int roundNum = 0;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -134,16 +135,31 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	@Override
 	public void startRotate() {
 		for (PlayerConfiguration p : detectives) {
-			Set<Move> moves = validMoves();
 			this.currentPlayer = p;
 			Player player = p.player;
-			player.makeMove(this, p.location, moves, this);
+			if (p == mrX) {
+                this.availableMoves = validMovesMrX();
+			    player.makeMove(this, p.location, this.availableMoves, this);
+            }
+            else {
+                this.availableMoves = validMoves();
+			    player.makeMove(this, p.location, this.availableMoves, this);
+            }
 		}
+		this.roundNum++;
 	}
 
 	private Set<Move> validMoves() {
-		return new HashSet<>();
+        Set<Move> valid = new HashSet<>();
+        //Move move = new TicketMove();
+        //valid.add(move);
+		return valid;
+		//Pass moves
 	}
+
+    private Set<Move> validMovesMrX() {
+        return new HashSet<>();
+    }
 
 	@Override
 	public Collection<Spectator> getSpectators() {
@@ -230,6 +246,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	@Override
 	public void accept(Move move) {
 	    if (move == null) throw new NullPointerException();
-	}
+	    if (!this.availableMoves.contains(move) && this.currentPlayer == this.mrX) throw new IllegalArgumentException("Mr X move not in valid moves");
+        else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Other player move not in valid moves");
+
+    }
 
 }
