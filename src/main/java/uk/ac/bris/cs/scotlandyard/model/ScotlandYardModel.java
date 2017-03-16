@@ -32,7 +32,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private PlayerConfiguration mrX;
     private PlayerConfiguration firstDetective;
     private List<PlayerConfiguration> startPlayers = new ArrayList<>();
-    private List<ScotlandYardPlayer> playerList= new ArrayList<>();
+    private List<ScotlandYardPlayer> playerList = new ArrayList<>();
     private PlayerConfiguration currentPlayer;
     private Set<Move> availableMoves;
     private int roundNum = 0;
@@ -146,7 +146,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public List<Colour> getPlayers() {
-		List<Colour> colours = new ArrayList<Colour>();
+		List<Colour> colours = new ArrayList<>();
 
 		for(PlayerConfiguration player : startPlayers){
 			colours.add(player.colour);
