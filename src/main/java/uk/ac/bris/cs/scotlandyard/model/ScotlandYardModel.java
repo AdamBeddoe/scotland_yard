@@ -133,8 +133,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void startRotate() {
-		//Generate Moves
-
 		for (PlayerConfiguration p : detectives) {
 			Set<Move> moves = validMoves();
 			this.currentPlayer = p;
@@ -231,7 +229,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void accept(Move move) {
-
+	    if (move == null) throw new NullPointerException();
 	}
 
 }
