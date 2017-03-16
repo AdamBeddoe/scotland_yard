@@ -34,6 +34,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private List<PlayerConfiguration> detectives = new ArrayList<PlayerConfiguration>();
     private List<ScotlandYardPlayer> playerList= new ArrayList<ScotlandYardPlayer>();
     private PlayerConfiguration currentPlayer;
+    private int roundNum = 0;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -200,8 +201,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public int getCurrentRound() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return this.roundNum;
 	}
 
 	@Override
