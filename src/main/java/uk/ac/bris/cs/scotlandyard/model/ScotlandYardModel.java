@@ -26,7 +26,7 @@ import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 
 // TODO implement all methods and pass all tests
-public class ScotlandYardModel implements ScotlandYardGame {
+public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private List<Boolean> rounds;
     private Graph<Integer, Transport> graph;
     private PlayerConfiguration mrX;
@@ -133,8 +133,18 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public void startRotate() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		//Generate Moves
+
+		for (PlayerConfiguration p : detectives) {
+			Set<Move> moves = validMoves();
+			this.currentPlayer = p;
+			Player player = p.player;
+			player.makeMove(this, p.location, moves, this);
+		}
+	}
+
+	private Set<Move> validMoves() {
+		return new HashSet<>();
 	}
 
 	@Override
@@ -217,6 +227,11 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	@Override
 	public Graph<Integer, Transport> getGraph() {
 		return new ImmutableGraph(graph);
+	}
+
+	@Override
+	public void accept(Move move) {
+
 	}
 
 }
