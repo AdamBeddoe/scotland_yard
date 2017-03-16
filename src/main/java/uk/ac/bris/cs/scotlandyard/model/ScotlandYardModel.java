@@ -156,8 +156,9 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
-		// TODO
-		throw new RuntimeException("Implement me");
+	    Set<Colour> winners = new HashSet<>();
+
+	    return Collections.unmodifiableSet(winners);
 	}
 
 	@Override
@@ -205,8 +206,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public boolean isRevealRound() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return rounds.get(this.roundNum);
 	}
 
 	@Override
