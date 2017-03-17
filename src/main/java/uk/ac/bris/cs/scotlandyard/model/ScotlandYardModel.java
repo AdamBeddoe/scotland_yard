@@ -133,7 +133,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	private Set<Move> validMoves() {
         Set<Move> valid = new HashSet<>();
-        //bus
         int loc = this.currentPlayer.location();
         Node node = this.graph.getNode(loc);
         Collection<Edge> edges = this.graph.getEdgesFrom(node);
