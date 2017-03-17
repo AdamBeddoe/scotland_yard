@@ -134,21 +134,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	private Set<Move> validMoves() {
         Set<Move> valid = new HashSet<>();
         //bus
-		int loc = this.currentPlayer.location();
-		Node node = this.graph.getNode(loc);
-		Collection<Edge> edges = this.graph.getEdgesFrom(node);
-		List<Node> destinations = new ArrayList<>();
-		for (Edge edge : edges) {
-			destinations.add(edge.destination());
-		}
+        int loc = this.currentPlayer.location();
+        Node node = this.graph.getNode(loc);
+        Collection<Edge> edges = this.graph.getEdgesFrom(node);
+        for (Edge edge : edges) {
+            Transport t = (Transport) edge.data();
+            Ticket ticket = Ticket.fromTransport(t);
+            if (currentPlayer.hasTickets(ticket)) {
+                Move move = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
+                valid.add(move);
+            }
 
-		for (Node<Integer> place : destinations) {
-			Move move = new TicketMove(currentPlayer.colour(), Bus, place.value());
-			valid.add(move);
-		}
-
-		return valid;
-		//Pass moves
+        }
+        return Collections.unmodifiableSet(valid);
 	}
 
     private Set<Move> validMovesMrX() {
@@ -157,17 +155,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		int loc = this.currentPlayer.location();
 		Node node = this.graph.getNode(loc);
 		Collection<Edge> edges = this.graph.getEdgesFrom(node);
-		List<Node> destinations = new ArrayList<>();
 		for (Edge edge : edges) {
-			destinations.add(edge.destination());
-		}
+			Transport t = (Transport) edge.data();
+			Ticket ticket = Ticket.fromTransport(t);
+			if (currentPlayer.hasTickets(ticket)) {
+                Move move = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
+                valid.add(move);
+            }
 
-		for (Node<Integer> place : destinations) {
-			Move move = new TicketMove(currentPlayer.colour(), Bus, place.value());
-			valid.add(move);
-		}
-
-		return valid;
+        }
+		return Collections.unmodifiableSet(valid);
     }
 
 	@Override
