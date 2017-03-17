@@ -24,16 +24,19 @@ import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 
 import uk.ac.bris.cs.gamekit.graph.Graph;
+import uk.ac.bris.cs.gamekit.graph.Node;
+
+import javax.print.attribute.standard.Destination;
 
 // TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private List<Boolean> rounds;
     private Graph<Integer, Transport> graph;
-    private PlayerConfiguration mrX;
+    private ScotlandYardPlayer mrX;
     private PlayerConfiguration firstDetective;
     private List<PlayerConfiguration> startPlayers = new ArrayList<>();
     private List<ScotlandYardPlayer> playerList = new ArrayList<>();
-    private PlayerConfiguration currentPlayer;
+    private ScotlandYardPlayer currentPlayer;
     private Set<Move> availableMoves;
     private int roundNum = 0;
 
@@ -42,11 +45,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			PlayerConfiguration... restOfTheDetectives) {
                 this.rounds = requireNonNull(rounds);
                 this.graph = requireNonNull(graph);
-                this.mrX = requireNonNull(mrX);
+                requireNonNull(mrX);
                 this.startPlayers.add(mrX);
                 this.firstDetective = requireNonNull(firstDetective);
                 this.startPlayers.add(firstDetective);
-                this.currentPlayer = mrX;
 
                 for(PlayerConfiguration detective : restOfTheDetectives) {
                 	this.startPlayers.add(requireNonNull(detective));
@@ -63,6 +65,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	 			for(PlayerConfiguration player : startPlayers){
 	 				playerList.add(new ScotlandYardPlayer(player.player, player.colour, player.location, player.tickets));
 				}
+
+				this.mrX = playerList.get(0);
+				this.currentPlayer = this.mrX;
 	}
 
 	// Checks all startPlayers for duplicate locations.
@@ -87,7 +92,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private void checkPlayerTickets(List<PlayerConfiguration> startPlayers) {
 		for (PlayerConfiguration player : startPlayers) {
 			if (player.tickets.size() != 5) throw new IllegalArgumentException("Player does not have required tickets");
-			if (!player.equals(this.mrX)) validateDetectiveTickets(player);
+			if (!player.equals(this.startPlayers.get(0))) validateDetectiveTickets(player);
 		}
     }
 
@@ -111,16 +116,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void startRotate() {
-		for (PlayerConfiguration p : startPlayers) {
+		for (ScotlandYardPlayer p : playerList) {
 			this.currentPlayer = p;
-			Player player = p.player;
+			Player player = p.player();
 			if (p == mrX) {
                 this.availableMoves = validMovesMrX();
-			    player.makeMove(this, p.location, this.availableMoves, this);
+			    player.makeMove(this, p.location(), this.availableMoves, this);
             }
             else {
                 this.availableMoves = validMoves();
-			    player.makeMove(this, p.location, this.availableMoves, this);
+			    player.makeMove(this, p.location(), this.availableMoves, this);
             }
 		}
 		this.roundNum++;
@@ -128,14 +133,41 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	private Set<Move> validMoves() {
         Set<Move> valid = new HashSet<>();
-        //Move move = new TicketMove();
-        //valid.add(move);
+        //bus
+		int loc = this.currentPlayer.location();
+		Node node = this.graph.getNode(loc);
+		Collection<Edge> edges = this.graph.getEdgesFrom(node);
+		List<Node> destinations = new ArrayList<>();
+		for (Edge edge : edges) {
+			destinations.add(edge.destination());
+		}
+
+		for (Node<Integer> place : destinations) {
+			Move move = new TicketMove(currentPlayer.colour(), Bus, place.value());
+			valid.add(move);
+		}
+
 		return valid;
 		//Pass moves
 	}
 
     private Set<Move> validMovesMrX() {
-        return new HashSet<>();
+		Set<Move> valid = new HashSet<>();
+		//bus
+		int loc = this.currentPlayer.location();
+		Node node = this.graph.getNode(loc);
+		Collection<Edge> edges = this.graph.getEdgesFrom(node);
+		List<Node> destinations = new ArrayList<>();
+		for (Edge edge : edges) {
+			destinations.add(edge.destination());
+		}
+
+		for (Node<Integer> place : destinations) {
+			Move move = new TicketMove(currentPlayer.colour(), Bus, place.value());
+			valid.add(move);
+		}
+
+		return valid;
     }
 
 	@Override
@@ -197,7 +229,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public Colour getCurrentPlayer() {
-		return currentPlayer.colour;
+		return currentPlayer.colour();
 	}
 
 	@Override
