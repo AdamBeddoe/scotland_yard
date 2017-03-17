@@ -150,21 +150,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	}
 
     private Set<Move> validMovesMrX() {
-		Set<Move> valid = new HashSet<>();
-		//bus
-		int loc = this.currentPlayer.location();
-		Node node = this.graph.getNode(loc);
-		Collection<Edge> edges = this.graph.getEdgesFrom(node);
-		for (Edge edge : edges) {
-			Transport t = (Transport) edge.data();
-			Ticket ticket = Ticket.fromTransport(t);
-			if (currentPlayer.hasTickets(ticket)) {
-                Move move = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
-                valid.add(move);
-            }
-
-        }
-		return Collections.unmodifiableSet(valid);
+		return validMoves();
     }
 
 	@Override
@@ -186,7 +172,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
-	    Set<Colour> winners = new HashSet<>();
+		Set<Colour> winners = new HashSet<>();
 
 	    return Collections.unmodifiableSet(winners);
 	}
