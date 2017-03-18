@@ -203,7 +203,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 				}
 			}
 
-            if (currentPlayer.hasTickets(Double)) {
+            if (currentPlayer.hasTickets(Double) && this.roundNum <= (rounds.size()-2)) {
 			    for (Move move : valid) {
 			        for (Move secondMove : validMovesFrom(move)) {
 			            Move move3 = new DoubleMove(Black,(TicketMove) move,(TicketMove) secondMove);
@@ -223,11 +223,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         if (move instanceof TicketMove) {
             Node node = this.graph.getNode(((TicketMove) move).destination());
             Collection<Edge> edges = this.graph.getEdgesFrom(node);
+            int numTickets;
             for (Edge edge : edges) {
                 occupied = false;
                 Transport t = (Transport) edge.data();
                 Ticket ticket = Ticket.fromTransport(t);
-                if (currentPlayer.hasTickets(ticket)) {
+                if (((TicketMove) move).ticket().equals(ticket)) numTickets = 2;
+                else numTickets = 1;
+                if (currentPlayer.hasTickets(ticket, numTickets)) {
                     for (ScotlandYardPlayer player : playerList) {
                         if (player.location() == ((Integer) edge.destination().value()) && !player.equals(this.mrX)) occupied = true;
                     }
