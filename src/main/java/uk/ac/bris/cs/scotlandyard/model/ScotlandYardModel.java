@@ -38,6 +38,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private List<ScotlandYardPlayer> playerList = new ArrayList<>();
     private ScotlandYardPlayer currentPlayer;
     private Set<Move> availableMoves;
+    private List<Spectator> spectators = new ArrayList<>();
     private int roundNum = 0;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -104,14 +105,18 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
-		// TODO
-		throw new RuntimeException("Implement me");
+		if (spectators.contains(spectator)) throw new IllegalArgumentException("Already a spectator");
+		else {
+			spectators.add(requireNonNull(spectator));
+		}
 	}
 
 	@Override
 	public void unregisterSpectator(Spectator spectator) {
-		// TODO
-		throw new RuntimeException("Implement me");
+		if (!spectators.contains((requireNonNull(spectator)))) throw new IllegalArgumentException("Not an existing spectator");
+		else {
+			spectators.remove(requireNonNull(spectator));
+		}
 	}
 
 	@Override
