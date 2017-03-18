@@ -46,8 +46,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			PlayerConfiguration... restOfTheDetectives) {
                 this.rounds = requireNonNull(rounds);
                 this.graph = requireNonNull(graph);
-                requireNonNull(mrX);
-                this.startPlayers.add(mrX);
+                this.startPlayers.add(requireNonNull(mrX));
                 this.firstDetective = requireNonNull(firstDetective);
                 this.startPlayers.add(firstDetective);
 
@@ -166,7 +165,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             Transport t = (Transport) edge.data();
             Ticket ticket = Ticket.fromTransport(t);
             if (currentPlayer.hasTickets(ticket)) {
-            					if (!nodeOccupied(edge)) {
+                if (!nodeOccupied(edge)) {
 					Move move = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
 					valid.add(move);
 				}
