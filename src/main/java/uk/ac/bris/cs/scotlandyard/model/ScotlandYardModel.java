@@ -141,11 +141,18 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             }
 		}
 		this.roundNum++;
+		rotationCompletedNotify();
 	}
 
 	private void startRotateNotify() {
 		for (Spectator spectator : spectators){
 			spectator.onRoundStarted(this, roundNum);
+		}
+	}
+
+	private void rotationCompletedNotify() {
+		for (Spectator spectator : spectators){
+			spectator.onRotationComplete(this);
 		}
 	}
 
