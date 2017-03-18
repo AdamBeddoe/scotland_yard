@@ -190,8 +190,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public Collection<Spectator> getSpectators() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return  Collections.unmodifiableCollection(spectators);
 	}
 
 	@Override
