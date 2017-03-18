@@ -144,14 +144,15 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         int loc = this.currentPlayer.location();
         Node node = this.graph.getNode(loc);
         Collection<Edge> edges = this.graph.getEdgesFrom(node);
-        boolean occupied = false;
+        boolean occupied;
 
         for (Edge edge : edges) {
+            occupied = false;
             Transport t = (Transport) edge.data();
             Ticket ticket = Ticket.fromTransport(t);
             if (currentPlayer.hasTickets(ticket)) {
             	for (ScotlandYardPlayer player : playerList) {
-            		if (player.location() == ((Integer) edge.destination().value())) occupied = true;
+            		if (player.location() == ((Integer) edge.destination().value()) && !player.equals(this.mrX)) occupied = true;
 				}
 
 				if (!occupied) {
@@ -166,26 +167,67 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
     private Set<Move> validMovesMrX() {
 		Set<Move> valid = validMoves();
+        Set<Move> doubleValid = new HashSet<>();
 		int loc = this.currentPlayer.location();
 		Node node = this.graph.getNode(loc);
-		Collection<Edge> edges = this.graph.getEdgesFrom(node);
-		boolean occupied = false;
+		Collection<Edge> firstEdges = this.graph.getEdgesFrom(node);
+		boolean occupied;
 
-		for (Edge edge : edges) {
+		for (Edge firstEdge : firstEdges) {
+		    occupied = false;
 			if (currentPlayer.hasTickets(Secret)) {
 				for (ScotlandYardPlayer player : playerList) {
-					if (player.location() == ((Integer) edge.destination().value())) occupied = true;
+					if (player.location() == ((Integer) firstEdge.destination().value()) && !player.equals(this.mrX)) occupied = true;
 				}
 
 				if (!occupied) {
-					Move move = new TicketMove(currentPlayer.colour(), Secret, (Integer) edge.destination().value());
+					Move move = new TicketMove(Black, Secret, (Integer) firstEdge.destination().value());
 					valid.add(move);
 				}
 			}
 
-		}
+            if (currentPlayer.hasTickets(Double)) {
+			    for (Move move : valid) {
+			        for (Move secondMove : validMovesFrom(move)) {
+			            Move move3 = new DoubleMove(Black,(TicketMove) move,(TicketMove) secondMove);
+                        doubleValid.add(move3);
+                    }
+                }
+            }
 
-		return valid;
+		}
+        doubleValid.addAll(valid);
+		return doubleValid;
+    }
+
+    private Set<Move> validMovesFrom(Move move) {
+        Set<Move> validMoves = new HashSet<>();
+        boolean occupied;
+        if (move instanceof TicketMove) {
+            Node node = this.graph.getNode(((TicketMove) move).destination());
+            Collection<Edge> edges = this.graph.getEdgesFrom(node);
+            for (Edge edge : edges) {
+                occupied = false;
+                Transport t = (Transport) edge.data();
+                Ticket ticket = Ticket.fromTransport(t);
+                if (currentPlayer.hasTickets(ticket)) {
+                    for (ScotlandYardPlayer player : playerList) {
+                        if (player.location() == ((Integer) edge.destination().value()) && !player.equals(this.mrX)) occupied = true;
+                    }
+
+                    if (!occupied) {
+                        Move newMove = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
+                        validMoves.add(newMove);
+                        if (currentPlayer.hasTickets(Secret)) {
+                            Move secretMove = new TicketMove(currentPlayer.colour(), Secret, (Integer) edge.destination().value());
+                            validMoves.add(secretMove);
+                        }
+                    }
+                }
+
+            }
+        }
+        return validMoves;
     }
 
 	@Override
