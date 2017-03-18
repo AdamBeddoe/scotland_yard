@@ -121,6 +121,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void startRotate() {
+		startRotateNotify();
+
 		for (ScotlandYardPlayer p : playerList) {
 			this.currentPlayer = p;
 			Player player = p.player();
@@ -128,6 +130,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
                 this.availableMoves = validMovesMrX();
 				Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 			    player.makeMove(this, p.location(), playerMoves, this);
+				this.roundNum++;
+				startRotateNotify();
             }
             else {
                 this.availableMoves = validMoves();
@@ -137,6 +141,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             }
 		}
 		this.roundNum++;
+	}
+
+	private void startRotateNotify() {
+		for (Spectator spectator : spectators){
+			spectator.onRoundStarted(this, roundNum);
+		}
 	}
 
 	private Set<Move> validMoves() {
