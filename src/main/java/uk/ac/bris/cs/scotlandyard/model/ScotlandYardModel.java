@@ -121,11 +121,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			Player player = p.player();
 			if (p == mrX) {
                 this.availableMoves = validMovesMrX();
-			    player.makeMove(this, p.location(), this.availableMoves, this);
+				Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
+			    player.makeMove(this, p.location(), playerMoves, this);
             }
             else {
                 this.availableMoves = validMoves();
-			    player.makeMove(this, p.location(), this.availableMoves, this);
+				if (availableMoves.isEmpty()) availableMoves.add(new PassMove(currentPlayer.colour()));
+				Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
+			    player.makeMove(this, p.location(), playerMoves, this);
             }
 		}
 		this.roundNum++;
@@ -153,22 +156,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             }
 
         }
-        return Collections.unmodifiableSet(valid);
+        return valid;
 	}
 
     private Set<Move> validMovesMrX() {
-		Set<Move> valid = new HashSet<>();
+		Set<Move> valid = validMoves();
 		int loc = this.currentPlayer.location();
 		Node node = this.graph.getNode(loc);
 		Collection<Edge> edges = this.graph.getEdgesFrom(node);
 		boolean occupied = false;
 
-		for (Move move : validMoves()){
-			valid.add(move);
-		}
-
 		for (Edge edge : edges) {
-
 			if (currentPlayer.hasTickets(Secret)) {
 				for (ScotlandYardPlayer player : playerList) {
 					if (player.location() == ((Integer) edge.destination().value())) occupied = true;
@@ -181,8 +179,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			}
 
 		}
-		return Collections.unmodifiableSet(valid);
 
+		return valid;
     }
 
 	@Override
@@ -271,7 +269,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	public void accept(Move move) {
 	    if (move == null) throw new NullPointerException();
 	    if (!this.availableMoves.contains(move) && this.currentPlayer == this.mrX) throw new IllegalArgumentException("Mr X move not in valid moves");
-        else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Other player move not in valid moves");
+        else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Detective move not in valid moves");
 
     }
 
