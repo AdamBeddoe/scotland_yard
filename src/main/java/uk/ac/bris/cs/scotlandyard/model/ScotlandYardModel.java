@@ -42,6 +42,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     private Set<Move> availableMoves;
     private List<Spectator> spectators = new ArrayList<>();
     private int roundNum = 0;
+    private int playerNum = 0;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -123,26 +124,23 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	@Override
 	public void startRotate() {
 		notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
+        this.availableMoves = validMovesMrX();
+		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
+		Player player = this.currentPlayer.player();
+		player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
+        notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
 
-		for (ScotlandYardPlayer p : playerList) {
-			this.currentPlayer = p;
-			Player player = p.player();
-			if (this.currentPlayer.equals(mrX)) {
-                this.availableMoves = validMovesMrX();
-				Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
-			    player.makeMove(this, p.location(), playerMoves, this);
-				this.roundNum++;
-				notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
-			}
+			/*
             else {
                 this.availableMoves = validMoves();
 				if (availableMoves.isEmpty()) availableMoves.add(new PassMove(currentPlayer.colour()));
 				Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 			    player.makeMove(this, p.location(), playerMoves, this);
             }
-		}
-		this.roundNum++;
-		notifyLoop(spectator -> spectator.onRotationComplete(this));
+            */
+
+
+		//notifyLoop(spectator -> spectator.onRotationComplete(this));
 	}
 
 	// Creates a set of valid moves for a detective.
@@ -315,6 +313,20 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Detective move not in valid moves");
 		move.visit(this);
 		notifyLoop(spectator -> spectator.onMoveMade(this, move));
+
+        this.playerNum++;
+        if (playerNum < this.playerList.size()) {
+            this.currentPlayer = this.playerList.get(playerNum);
+            Player player = this.currentPlayer.player();
+            this.availableMoves = validMoves();
+            if (availableMoves.isEmpty()) availableMoves.add(new PassMove(currentPlayer.colour()));
+            Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
+            player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
+        }
+        else {
+            this.roundNum++;
+            this.playerNum = 0;
+        }
     }
 
 	private void notifyLoop(NotifyFunction function) {
