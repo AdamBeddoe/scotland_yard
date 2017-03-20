@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 
@@ -121,7 +123,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void startRotate() {
-		startRotateNotify();
+		notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
 
 		for (ScotlandYardPlayer p : playerList) {
 			this.currentPlayer = p;
@@ -131,8 +133,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 				Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 			    player.makeMove(this, p.location(), playerMoves, this);
 				this.roundNum++;
-				startRotateNotify();
-            }
+				notifyLoop((Spectator s) -> s.onRoundStarted(this, roundNum));
+			}
             else {
                 this.availableMoves = validMoves();
 				if (availableMoves.isEmpty()) availableMoves.add(new PassMove(currentPlayer.colour()));
@@ -141,19 +143,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             }
 		}
 		this.roundNum++;
-		rotationCompletedNotify();
-	}
-
-	private void startRotateNotify() {
-		for (Spectator spectator : spectators){
-			spectator.onRoundStarted(this, roundNum);
-		}
-	}
-
-	private void rotationCompletedNotify() {
-		for (Spectator spectator : spectators){
-			spectator.onRotationComplete(this);
-		}
+		notifyLoop((Spectator s) -> s.onRotationComplete(this));
 	}
 
 	private Set<Move> validMoves() {
@@ -336,4 +326,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
     }
 
+	private void notifyLoop(NotifyFunction function) {
+		for (Spectator spectator : spectators){
+			function.notifyFunc(spectator);
+		}
+	}
+
+}
+
+interface NotifyFunction {
+	public void notifyFunc(Spectator spectator);
 }
