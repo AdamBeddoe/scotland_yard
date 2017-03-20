@@ -48,8 +48,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			PlayerConfiguration... restOfTheDetectives) {
                 this.rounds = requireNonNull(rounds);
                 this.graph = requireNonNull(graph);
-                requireNonNull(mrX);
-                this.startPlayers.add(mrX);
+                this.startPlayers.add(requireNonNull(mrX));
                 this.firstDetective = requireNonNull(firstDetective);
                 this.startPlayers.add(firstDetective);
 
@@ -128,7 +127,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		for (ScotlandYardPlayer p : playerList) {
 			this.currentPlayer = p;
 			Player player = p.player();
-			if (p == mrX) {
+			if (this.currentPlayer.equals(mrX)) {
                 this.availableMoves = validMovesMrX();
 				Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 			    player.makeMove(this, p.location(), playerMoves, this);
@@ -146,96 +145,87 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		notifyLoop((Spectator s) -> s.onRotationComplete(this));
 	}
 
+	// Creates a set of valid moves for a detective.
 	private Set<Move> validMoves() {
-        Set<Move> valid = new HashSet<>();
+        Set<Move> validMoves = new HashSet<>();
         int loc = this.currentPlayer.location();
         Node node = this.graph.getNode(loc);
         Collection<Edge> edges = this.graph.getEdgesFrom(node);
-        boolean occupied;
 
         for (Edge edge : edges) {
-            occupied = false;
             Transport t = (Transport) edge.data();
             Ticket ticket = Ticket.fromTransport(t);
-            if (currentPlayer.hasTickets(ticket)) {
-            	for (ScotlandYardPlayer player : playerList) {
-            		if (player.location() == ((Integer) edge.destination().value()) && !player.equals(this.mrX)) occupied = true;
-				}
-
-				if (!occupied) {
-					Move move = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
-					valid.add(move);
-				}
+            if (currentPlayer.hasTickets(ticket) && !nodeOccupied(edge)) {
+                Move move = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
+				validMoves.add(move);
             }
 
         }
-        return valid;
+        return validMoves;
 	}
 
+	// Creates a set of valid moves for MrX.
     private Set<Move> validMovesMrX() {
-		Set<Move> valid = validMoves();
-        Set<Move> doubleValid = new HashSet<>();
+		//Can mrX move to his own spot?
+		Set<Move> firstMoves = validMoves();
+        Set<Move> validMoves = new HashSet<>();
 		int loc = this.currentPlayer.location();
 		Node node = this.graph.getNode(loc);
+
 		Collection<Edge> firstEdges = this.graph.getEdgesFrom(node);
-		boolean occupied;
-
 		for (Edge firstEdge : firstEdges) {
-		    occupied = false;
-			if (currentPlayer.hasTickets(Secret)) {
-				for (ScotlandYardPlayer player : playerList) {
-					if (player.location() == ((Integer) firstEdge.destination().value()) && !player.equals(this.mrX)) occupied = true;
-				}
-
-				if (!occupied) {
-					Move move = new TicketMove(Black, Secret, (Integer) firstEdge.destination().value());
-					valid.add(move);
-				}
+			if (currentPlayer.hasTickets(Secret) && !nodeOccupied(firstEdge)) {
+				Move regularMove = new TicketMove(Black, Secret, (Integer) firstEdge.destination().value());
+				firstMoves.add(regularMove);
 			}
 
-            if (currentPlayer.hasTickets(Double)) {
-			    for (Move move : valid) {
-			        for (Move secondMove : validMovesFrom(move)) {
-			            Move move3 = new DoubleMove(Black,(TicketMove) move,(TicketMove) secondMove);
-                        doubleValid.add(move3);
+            if (currentPlayer.hasTickets(Double) && this.roundNum <= (rounds.size()-2)) {
+                for (Move firstMove : firstMoves) {
+                    for (Move secondMove : validMovesFrom(firstMove)) {
+                        Move doubleMove = new DoubleMove(Black, (TicketMove) firstMove, (TicketMove) secondMove);
+                        validMoves.add(doubleMove);
                     }
                 }
             }
-
 		}
-        doubleValid.addAll(valid);
-		return doubleValid;
+        validMoves.addAll(firstMoves);
+		return validMoves;
     }
 
+    // Creates a set of possible further moves following each move (for double moves).
     private Set<Move> validMovesFrom(Move move) {
         Set<Move> validMoves = new HashSet<>();
-        boolean occupied;
         if (move instanceof TicketMove) {
             Node node = this.graph.getNode(((TicketMove) move).destination());
             Collection<Edge> edges = this.graph.getEdgesFrom(node);
+            int numTickets;
+
             for (Edge edge : edges) {
-                occupied = false;
                 Transport t = (Transport) edge.data();
                 Ticket ticket = Ticket.fromTransport(t);
-                if (currentPlayer.hasTickets(ticket)) {
-                    for (ScotlandYardPlayer player : playerList) {
-                        if (player.location() == ((Integer) edge.destination().value()) && !player.equals(this.mrX)) occupied = true;
-                    }
+                if (((TicketMove) move).ticket().equals(ticket)) numTickets = 2;
+                else numTickets = 1;
 
-                    if (!occupied) {
-                        Move newMove = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
-                        validMoves.add(newMove);
-                        if (currentPlayer.hasTickets(Secret)) {
-                            Move secretMove = new TicketMove(currentPlayer.colour(), Secret, (Integer) edge.destination().value());
-                            validMoves.add(secretMove);
-                        }
+                if (currentPlayer.hasTickets(ticket, numTickets)  && !nodeOccupied(edge)) {
+					Move newMove = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
+                    validMoves.add(newMove);
+                    if (currentPlayer.hasTickets(Secret)) {
+                        Move secretMove = new TicketMove(Black, Secret, (Integer) edge.destination().value());
+                        validMoves.add(secretMove);
                     }
                 }
-
             }
         }
         return validMoves;
     }
+
+    // Returns true if the destination of an edge is occupied by a detective.
+	private Boolean nodeOccupied(Edge edge) {
+		for (ScotlandYardPlayer player : playerList) {
+			if (player.location() == ((Integer) edge.destination().value()) && !player.equals(this.mrX)) return true;
+		}
+		return false;
+	}
 
 	@Override
 	public Collection<Spectator> getSpectators() {
