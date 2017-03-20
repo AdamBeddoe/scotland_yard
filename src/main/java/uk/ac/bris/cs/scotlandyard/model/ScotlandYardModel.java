@@ -31,7 +31,7 @@ import uk.ac.bris.cs.gamekit.graph.Node;
 import javax.print.attribute.standard.Destination;
 
 // TODO implement all methods and pass all tests
-public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
+public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, MoveVisitor {
     private List<Boolean> rounds;
     private Graph<Integer, Transport> graph;
     private ScotlandYardPlayer mrX;
@@ -313,7 +313,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	    if (move == null) throw new NullPointerException();
 	    if (!this.availableMoves.contains(move) && this.currentPlayer == this.mrX) throw new IllegalArgumentException("Mr X move not in valid moves");
         else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Detective move not in valid moves");
-
+		move.visit(this);
 		notifyLoop(spectator -> spectator.onMoveMade(this, move));
     }
 
@@ -323,8 +323,20 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		}
 	}
 
+	public void visit(PassMove move) {
+	}
+
+	public void visit(TicketMove move) {
+		this.currentPlayer.removeTicket(move.ticket());
+		this.currentPlayer.location(move.destination());
+	}
+
+	public void visit(DoubleMove move) {
+		this.currentPlayer.removeTicket(Double);
+		this.currentPlayer.location(move.finalDestination());
+	}
 }
 
 interface NotifyFunction {
-	public void notifyFunc(Spectator spectator);
+	void notifyFunc(Spectator spectator);
 }
