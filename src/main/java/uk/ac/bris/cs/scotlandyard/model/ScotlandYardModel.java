@@ -333,6 +333,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	public void visit(TicketMove move) {
 		this.currentPlayer.removeTicket(move.ticket());
+		this.mrX.addTicket(move.ticket());
 		this.currentPlayer.location(move.destination());
 	}
 
