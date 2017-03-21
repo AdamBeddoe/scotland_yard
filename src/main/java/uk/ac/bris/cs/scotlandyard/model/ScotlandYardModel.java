@@ -128,9 +128,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 		Player player = this.currentPlayer.player();
 		player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
-        notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
         this.roundNum++;
-
+		notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
 			/*
             else {
                 this.availableMoves = validMoves();
@@ -309,6 +308,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void accept(Move move) {
+		//notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
+
 	    if (move == null) throw new NullPointerException();
 	    if (!this.availableMoves.contains(move) && this.currentPlayer == this.mrX) throw new IllegalArgumentException("Mr X move not in valid moves");
         else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Detective move not in valid moves");
@@ -327,11 +328,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             if (availableMoves.isEmpty()) availableMoves.add(new PassMove(currentPlayer.colour()));
             Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
             player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
-        }
+		}
         else {
-            this.roundNum++;
+			this.roundNum++;
             this.playerNum = 0;
-        }
+		}
     }
 
 	private void notifyLoop(NotifyFunction function) {
