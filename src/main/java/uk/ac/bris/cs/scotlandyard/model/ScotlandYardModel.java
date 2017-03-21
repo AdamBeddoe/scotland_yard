@@ -125,7 +125,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void startRotate() {
-		notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
+        this.playerNum = 0;
         this.availableMoves = validMovesMrX();
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 		Player player = this.currentPlayer.player();
@@ -244,7 +244,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 		for(ScotlandYardPlayer player : playerList) {
 			if(player.colour().equals(Black)){
-				if(!isRevealRound()) location = this.lastKnownLocation; //Logic should be sound
+				if(!isRevealRound()) location = this.lastKnownLocation; //Now could be sound?
 				else return player.location();
 			}
 			else if(player.colour().equals(colour)) {
@@ -302,11 +302,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void accept(Move move) {
-	    if (move == null) throw new NullPointerException();
-	    if (!this.availableMoves.contains(move) && this.currentPlayer == this.mrX) throw new IllegalArgumentException("Mr X move not in valid moves");
-        else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Detective move not in valid moves");
+	    requireNonNull(move);
+        if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Move not in valid moves");
         move.visit(this);
-
 
         this.playerNum++;
         if (playerNum < this.playerList.size()) {
@@ -318,27 +316,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
 		}
         else {
-            this.playerNum = 0;
 			notifyLoop(spectator -> spectator.onRotationComplete(this));
 		}
     }
-
-	private void notifyLoop(NotifyFunction function) {
-		for (Spectator spectator : spectators){
-			function.notifyFunc(spectator);
-		}
-	}
-
-	public void visit(PassMove move) {
-		notifyLoop(spectator -> spectator.onMoveMade(this, move));
-	}
 
 	public void visit(TicketMove move) {
 		this.currentPlayer.removeTicket(move.ticket());
 		this.currentPlayer.location(move.destination());
 		if (!this.currentPlayer.isMrX()) this.mrX.addTicket(move.ticket());
-		notifyLoop(spectator -> spectator.onMoveMade(this, move));
-		if (this.currentPlayer.equals(mrX)) this.roundNum++;
+		if (this.currentPlayer.equals(mrX)) {
+            this.roundNum++;
+            notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));// maybe here?
+        }
+        notifyLoop(spectator -> spectator.onMoveMade(this, move));
 	}
 
 	public void visit(DoubleMove move) {
@@ -347,6 +337,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		move.firstMove().visit(this);
 		move.secondMove().visit(this);
 	}
+
+    public void visit(PassMove move) {
+        notifyLoop(spectator -> spectator.onMoveMade(this, move));
+    }
+
+    private void notifyLoop(NotifyFunction function) {
+        for (Spectator spectator : spectators){
+            function.notifyFunc(spectator);
+        }
+    }
 }
 
 interface NotifyFunction {
