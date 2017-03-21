@@ -129,6 +129,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		Player player = this.currentPlayer.player();
 		player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
         notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
+        this.roundNum++;
 
 			/*
             else {
@@ -252,13 +253,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public int getPlayerLocation(Colour colour) {
 		int location = 0;
 
-		for(PlayerConfiguration player : startPlayers) {
-			if(player.colour.equals(Black)){
-				if(!getRounds().get(getRounds().size()-1)) location = 0;
-				else return player.location;
+		for(ScotlandYardPlayer player : playerList) {
+			if(player.colour().equals(Black)){
+				if(!getRounds().get(getRounds().size()-1)) location = 0; // Need to use roundNum
+				else return player.location();
 			}
-			else if(player.colour.equals(colour)) {
-				location = player.location;
+			else if(player.colour().equals(colour)) {
+				location = player.location();
 			}
 		}
 
@@ -267,9 +268,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public int getPlayerTickets(Colour colour, Ticket ticket) {
-		for(PlayerConfiguration player : startPlayers) {
-			if(player.colour.equals(colour)) {
-				return player.tickets.get(ticket);
+		for(ScotlandYardPlayer player : playerList) {
+			if(player.colour().equals(colour)) {
+				return player.tickets().get(ticket);
 			}
 		}
 
@@ -311,11 +312,15 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	    if (move == null) throw new NullPointerException();
 	    if (!this.availableMoves.contains(move) && this.currentPlayer == this.mrX) throw new IllegalArgumentException("Mr X move not in valid moves");
         else if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Detective move not in valid moves");
-		move.visit(this);
+        System.out.println(currentPlayer.colour() + " " + currentPlayer.tickets());
+        move.visit(this);
+        System.out.println(currentPlayer.colour() + " " + currentPlayer.tickets());
 		notifyLoop(spectator -> spectator.onMoveMade(this, move));
 
         this.playerNum++;
         if (playerNum < this.playerList.size()) {
+            System.out.println("Player: " + this.currentPlayer.colour());
+            System.out.println("out of " + this.playerList);
             this.currentPlayer = this.playerList.get(playerNum);
             Player player = this.currentPlayer.player();
             this.availableMoves = validMoves();
@@ -342,11 +347,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		this.currentPlayer.removeTicket(move.ticket());
 		this.currentPlayer.location(move.destination());
 	}
-
+    /*
 	public void visit(DoubleMove move) {
 		this.currentPlayer.removeTicket(Double);
 		this.currentPlayer.location(move.finalDestination());
 	}
+	*/
 }
 
 interface NotifyFunction {
