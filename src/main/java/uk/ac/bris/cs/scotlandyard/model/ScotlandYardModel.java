@@ -126,6 +126,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	@Override
 	public void startRotate() {
         this.playerNum = 0;
+        this.currentPlayer = this.mrX;
         this.availableMoves = validMovesMrX();
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 		Player player = this.currentPlayer.player();
@@ -244,8 +245,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 		for(ScotlandYardPlayer player : playerList) {
 			if(player.colour().equals(Black)){
-				if(!isRevealRound()) location = this.lastKnownLocation; //Now could be sound?
-				else return player.location();
+				location = this.lastKnownLocation; //Now could be sound?
 			}
 			else if(player.colour().equals(colour)) {
 				location = player.location();
@@ -323,8 +323,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public void visit(TicketMove move) {
 		this.currentPlayer.removeTicket(move.ticket());
 		this.currentPlayer.location(move.destination());
-		if (!this.currentPlayer.isMrX()) this.mrX.addTicket(move.ticket());
-		if (this.currentPlayer.equals(mrX)) {
+		if (this.currentPlayer.isDetective()) this.mrX.addTicket(move.ticket());
+		if (this.currentPlayer.isMrX()) {
+            if(isRevealRound()) this.lastKnownLocation = this.currentPlayer.location();
             this.roundNum++;
             notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));// maybe here?
         }
