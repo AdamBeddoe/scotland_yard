@@ -45,6 +45,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     private int playerNum = 0;
     private int lastKnownLocation = 0;
     private boolean gameOver = false;
+    private Set<Colour> winners = new HashSet();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -125,13 +126,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void startRotate() {
+	    if (this.gameOver) throw new IllegalStateException("Game won");
         this.playerNum = 0;
         this.currentPlayer = this.mrX;
         this.availableMoves = validMovesMrX();
+        if (this.availableMoves.isEmpty()) gameOver();
+        if (!detectivesHaveTickets()) gameOver();
+        System.out.println(this.availableMoves);
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 		Player player = this.currentPlayer.player();
-		player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
-		notifyLoop(spectator -> spectator.onRoundStarted(this, getCurrentRound()));
+        notifyLoop(spectator -> spectator.onRoundStarted(this, getCurrentRound()));
+        player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
 	}
 
 	// Creates a set of valid moves for a detective.
@@ -234,9 +239,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
-		Set<Colour> winners = new HashSet<>();
-
-	    return Collections.unmodifiableSet(winners);
+	    return Collections.unmodifiableSet(this.winners);
 	}
 
 	@Override
@@ -268,10 +271,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public boolean isGameOver() {
-		if (this.roundNum > this.rounds.size()) this.gameOver = true;
-		for (ScotlandYardPlayer player : playerList) {
-			if (player.location() == this.mrX.location() && roundNum > 0) this.gameOver = true;
-		}
 		return this.gameOver;
 	}
 
@@ -316,20 +315,24 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
 		}
         else {
-			notifyLoop(spectator -> spectator.onRotationComplete(this));
+            if (this.roundNum >= this.rounds.size()) gameOver();
+			if (!isGameOver()) notifyLoop(spectator -> spectator.onRotationComplete(this));
 		}
     }
 
 	public void visit(TicketMove move) {
 		this.currentPlayer.removeTicket(move.ticket());
 		this.currentPlayer.location(move.destination());
-		if (this.currentPlayer.isDetective()) this.mrX.addTicket(move.ticket());
 		if (this.currentPlayer.isMrX()) {
             if(isRevealRound()) this.lastKnownLocation = this.currentPlayer.location();
             this.roundNum++;
-            notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));// maybe here?
+            notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
         }
         notifyLoop(spectator -> spectator.onMoveMade(this, move));
+        if (this.currentPlayer.isDetective()) {
+            if (this.currentPlayer.location() == this.mrX.location() && roundNum > 0) gameOver();
+            this.mrX.addTicket(move.ticket());
+        }
 	}
 
 	public void visit(DoubleMove move) {
@@ -341,6 +344,29 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
     public void visit(PassMove move) {
         notifyLoop(spectator -> spectator.onMoveMade(this, move));
+    }
+
+    private void gameOver() {
+	    this.gameOver = true;
+	    if (this.currentPlayer.isMrX()) this.winners.add(Black);
+	    else {
+	        for (ScotlandYardPlayer player: playerList) {
+	            if (player.colour() != Black) this.winners.add(player.colour());
+            }
+        }
+        notifyLoop(spectator -> spectator.onGameOver(this, this.winners));
+    }
+
+    private boolean detectivesHaveTickets() {
+	    boolean hasTickets = false;
+	    for (ScotlandYardPlayer player : playerList) {
+	        if (!player.isMrX()) {
+	            if (       player.hasTickets(Bus)
+                        || player.hasTickets(Taxi)
+                        || player.hasTickets(Underground)) hasTickets = true;
+            }
+        }
+        return hasTickets;
     }
 
     private void notifyLoop(NotifyFunction function) {
