@@ -327,12 +327,22 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public void visit(TicketMove move) {
 		this.currentPlayer.removeTicket(move.ticket());
 		this.currentPlayer.location(move.destination());
+		TicketMove newMove = move;
+
 		if (this.currentPlayer.isMrX()) {
-            if(isRevealRound()) this.lastKnownLocation = this.currentPlayer.location();
+            if(isRevealRound()) {
+            	this.lastKnownLocation = this.currentPlayer.location();
+            }
+            else {
+            	newMove = new TicketMove(Black, move.ticket(), this.lastKnownLocation);
+			}
             this.roundNum++;
             notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
         }
-        notifyLoop(spectator -> spectator.onMoveMade(this, move));
+
+		final TicketMove finalMove = newMove;
+        notifyLoop(spectator -> spectator.onMoveMade(this, finalMove));
+
         if (this.currentPlayer.isDetective()) {
             if (this.currentPlayer.location() == this.mrX.location() && roundNum > 0) gameOver();
             this.mrX.addTicket(move.ticket());
@@ -341,7 +351,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	public void visit(DoubleMove move) {
 		this.currentPlayer.removeTicket(Double);
-		notifyLoop(spectator -> spectator.onMoveMade(this, move));
+
+		int dest1 = move.firstMove().destination();
+		int dest2 = move.finalDestination();
+
+		if (!rounds.get(this.roundNum)) dest1 = this.lastKnownLocation;
+		else this.lastKnownLocation = dest1;
+		if (!rounds.get(this.roundNum+1)) dest2 = this.lastKnownLocation;
+
+		DoubleMove newMove = new DoubleMove(Black, move.firstMove().ticket(), dest1, move.secondMove().ticket(), dest2);
+
+		notifyLoop(spectator -> spectator.onMoveMade(this, newMove));
 		move.firstMove().visit(this);
 		move.secondMove().visit(this);
 	}
