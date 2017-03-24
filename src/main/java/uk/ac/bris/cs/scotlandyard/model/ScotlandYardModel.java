@@ -126,13 +126,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void startRotate() {
-	    if (this.gameOver) throw new IllegalStateException("Game won");
+        if (this.gameOver) throw new IllegalStateException("Game won");
         this.playerNum = 0;
         this.currentPlayer = this.mrX;
         this.availableMoves = validMovesMrX();
         if (this.availableMoves.isEmpty()) gameOver();
-        if (!detectivesHaveTickets()) gameOver();
-        System.out.println(this.availableMoves);
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 		Player player = this.currentPlayer.player();
         notifyLoop(spectator -> spectator.onRoundStarted(this, getCurrentRound()));
@@ -140,17 +138,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	}
 
 	// Creates a set of valid moves for a detective.
-	private Set<Move> validMoves() {
+	private Set<Move> validMoves(ScotlandYardPlayer player) {
         Set<Move> validMoves = new HashSet<>();
-        int loc = this.currentPlayer.location();
+        int loc = player.location();
         Node node = this.graph.getNode(loc);
         Collection<Edge> edges = this.graph.getEdgesFrom(node);
 
         for (Edge edge : edges) {
             Transport t = (Transport) edge.data();
             Ticket ticket = Ticket.fromTransport(t);
-            if (currentPlayer.hasTickets(ticket) && !nodeOccupied(edge)) {
-                Move move = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
+            if (player.hasTickets(ticket) && !nodeOccupied(edge)) {
+                Move move = new TicketMove(player.colour(), ticket, (Integer) edge.destination().value());
 				validMoves.add(move);
             }
 
@@ -161,19 +159,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	// Creates a set of valid moves for MrX.
     private Set<Move> validMovesMrX() {
 		//Can mrX move to his own spot?
-		Set<Move> firstMoves = validMoves();
+		Set<Move> firstMoves = validMoves(this.mrX);
         Set<Move> validMoves = new HashSet<>();
-		int loc = this.currentPlayer.location();
+		int loc = this.mrX.location();
 		Node node = this.graph.getNode(loc);
 
 		Collection<Edge> firstEdges = this.graph.getEdgesFrom(node);
 		for (Edge firstEdge : firstEdges) {
-			if (currentPlayer.hasTickets(Secret) && !nodeOccupied(firstEdge)) {
+			if (this.mrX.hasTickets(Secret) && !nodeOccupied(firstEdge)) {
 				Move regularMove = new TicketMove(Black, Secret, (Integer) firstEdge.destination().value());
 				firstMoves.add(regularMove);
 			}
 
-            if (currentPlayer.hasTickets(Double) && this.roundNum <= (rounds.size()-2)) {
+            if (this.mrX.hasTickets(Double) && this.roundNum <= (rounds.size()-2)) {
                 for (Move firstMove : firstMoves) {
                     for (Move secondMove : validMovesFrom(firstMove)) {
                         Move doubleMove = new DoubleMove(Black, (TicketMove) firstMove, (TicketMove) secondMove);
@@ -248,7 +246,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 		for(ScotlandYardPlayer player : playerList) {
 			if(player.colour().equals(Black)){
-				location = this.lastKnownLocation; //Now could be sound?
+				location = this.lastKnownLocation;
 			}
 			else if(player.colour().equals(colour)) {
 				location = player.location();
@@ -271,6 +269,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public boolean isGameOver() {
+	    if (this.roundNum == 0) {
+	        if (this.detectivesAllStuck()) gameOver = true;
+	        if (this.validMovesMrX().isEmpty()) gameOver = true;
+        }
 		return this.gameOver;
 	}
 
@@ -309,14 +311,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         if (playerNum < this.playerList.size()) {
             this.currentPlayer = this.playerList.get(playerNum);
             Player player = this.currentPlayer.player();
-            this.availableMoves = validMoves();
+            this.availableMoves = validMoves(this.currentPlayer);
             if (availableMoves.isEmpty()) availableMoves.add(new PassMove(currentPlayer.colour()));
             Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
             player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
 		}
         else {
             if (this.roundNum >= this.rounds.size()) gameOver();
-			if (!isGameOver()) notifyLoop(spectator -> spectator.onRotationComplete(this));
+            if (validMovesMrX().isEmpty()) gameOver();
+            if (detectivesAllStuck()) gameOver();
+            if (!isGameOver()) notifyLoop(spectator -> spectator.onRotationComplete(this));
 		}
     }
 
@@ -357,16 +361,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         notifyLoop(spectator -> spectator.onGameOver(this, this.winners));
     }
 
-    private boolean detectivesHaveTickets() {
-	    boolean hasTickets = false;
+    private boolean detectivesAllStuck() {
+	    boolean areStuck = true;
 	    for (ScotlandYardPlayer player : playerList) {
-	        if (!player.isMrX()) {
-	            if (       player.hasTickets(Bus)
-                        || player.hasTickets(Taxi)
-                        || player.hasTickets(Underground)) hasTickets = true;
-            }
+	        if (!player.isMrX() && !validMoves(player).isEmpty()) areStuck = false;
         }
-        return hasTickets;
+        return areStuck;
     }
 
     private void notifyLoop(NotifyFunction function) {
