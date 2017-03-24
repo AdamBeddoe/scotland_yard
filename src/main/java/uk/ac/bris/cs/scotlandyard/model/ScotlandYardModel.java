@@ -128,7 +128,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public void startRotate() {
         if (this.gameOver) throw new IllegalStateException("Game won");
         this.playerNum = 0;
-        this.currentPlayer = this.mrX;
         this.availableMoves = validMovesMrX();
         if (this.availableMoves.isEmpty()) gameOver();
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
@@ -317,6 +316,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
 		}
         else {
+            this.currentPlayer = this.mrX;
             if (this.roundNum >= this.rounds.size()) gameOver();
             if (validMovesMrX().isEmpty()) gameOver();
             if (detectivesAllStuck()) gameOver();
