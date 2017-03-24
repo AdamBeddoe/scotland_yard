@@ -103,7 +103,7 @@ public class ModelSixPlayerPlayOutTest extends ModelTestBase {
 		startRoundUntil(game, 11);
 
 		assertThat(game.isGameOver()).isTrue();
-		// detectives won at round 11
+		// detectives won at round 11x
 		assertThat(game.getWinningPlayers()).containsOnly(Green, Yellow, White, Red, Blue);
 	}
 

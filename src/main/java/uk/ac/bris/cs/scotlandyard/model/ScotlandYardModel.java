@@ -127,10 +127,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void startRotate() {
-		System.out.println("Round" + roundNum);
-		for (ScotlandYardPlayer player : playerList) {
-			System.out.println("Player: " +  player.colour() + "Loc :" + player.location());
-		}
         if (this.gameOver) throw new IllegalStateException("Game won");
         this.playerNum = 0;
         this.availableMoves = validMovesMrX();
@@ -156,11 +152,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
                 Move move = new TicketMove(player.colour(), ticket, (Integer) edge.destination().value());
 				validMoves.add(move);
             }
-
         }
-		if (player.colour().equals(Blue)) {
-			System.out.println(validMoves);
-		}
+
         return validMoves;
 	}
 
@@ -312,10 +305,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public void accept(Move move) {
 	    requireNonNull(move);
 
-		if (this.currentPlayer.colour().equals(Blue)) {
-			System.out.println(move.toString());
-		}
-
         if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Move not in valid moves");
         move.visit(this);
 
@@ -357,10 +346,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         notifyLoop(spectator -> spectator.onMoveMade(this, finalMove));
 
         if (this.currentPlayer.isDetective()) {
-        	if (this.currentPlayer.colour().equals(Blue)) {
-				System.out.println(this.currentPlayer.location());
-				System.out.println(this.mrX.location());
-			}
+
             if (this.currentPlayer.location() == this.mrX.location() && roundNum > 0) gameOver();
             this.mrX.addTicket(move.ticket());
         }
