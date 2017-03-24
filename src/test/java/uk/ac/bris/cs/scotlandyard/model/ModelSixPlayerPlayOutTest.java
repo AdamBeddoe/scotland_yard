@@ -47,7 +47,7 @@ public class ModelSixPlayerPlayOutTest extends ModelTestBase {
 				.doAnswer(tryChoose(ticket(Black, Taxi, 172)))
 				.doAnswer(tryChoose(ticket(Black, Taxi, 128))).when(black.player)
 				.makeMove(any(), anyInt(), anySet(), isNotNull());
-		doAnswer(tryChoose(ticket(Blue, Taxi, 69))).doAnswer(tryChoose(ticket(Blue, Taxi, 86)))
+		doAnswer(tryChoose(ticket(Blue, Taxi, 69))).doAnswer(tryChoose(ticket(Blue, Taxi, 86))) // round 1
 				.doAnswer(tryChoose(ticket(Blue, Bus, 116)))
 				.doAnswer(tryChoose(ticket(Blue, Taxi, 127)))
 				.doAnswer(tryChoose(ticket(Blue, Bus, 133)))

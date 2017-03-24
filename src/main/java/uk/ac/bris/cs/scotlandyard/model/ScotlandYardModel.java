@@ -11,6 +11,7 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.Black;
+import static uk.ac.bris.cs.scotlandyard.model.Colour.Blue;
 import static uk.ac.bris.cs.scotlandyard.model.Ticket.*;
 
 import java.util.ArrayList;
@@ -126,6 +127,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void startRotate() {
+		System.out.println("Round" + roundNum);
+		for (ScotlandYardPlayer player : playerList) {
+			System.out.println("Player: " +  player.colour() + "Loc :" + player.location());
+		}
         if (this.gameOver) throw new IllegalStateException("Game won");
         this.playerNum = 0;
         this.availableMoves = validMovesMrX();
@@ -138,6 +143,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	// Creates a set of valid moves for a detective.
 	private Set<Move> validMoves(ScotlandYardPlayer player) {
+
         Set<Move> validMoves = new HashSet<>();
         int loc = player.location();
         Node node = this.graph.getNode(loc);
@@ -152,12 +158,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             }
 
         }
+		if (player.colour().equals(Blue)) {
+			System.out.println(validMoves);
+		}
         return validMoves;
 	}
 
 	// Creates a set of valid moves for MrX.
     private Set<Move> validMovesMrX() {
-		//Can mrX move to his own spot?
 		Set<Move> firstMoves = validMoves(this.mrX);
         Set<Move> validMoves = new HashSet<>();
 		int loc = this.mrX.location();
@@ -213,8 +221,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     // Returns true if the destination of an edge is occupied by a detective.
 	private Boolean nodeOccupied(Edge edge) {
 		for (ScotlandYardPlayer player : playerList) {
-			if (player.location() == ((Integer) edge.destination().value()) && !player.equals(this.mrX)) return true;
-		}
+			if (edge.destination().value() == (Integer)player.location() && !player.isMrX()) return true;
+			}
 		return false;
 	}
 
@@ -303,6 +311,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	@Override
 	public void accept(Move move) {
 	    requireNonNull(move);
+
+		if (this.currentPlayer.colour().equals(Blue)) {
+			System.out.println(move.toString());
+		}
+
         if (!this.availableMoves.contains(move)) throw new IllegalArgumentException("Move not in valid moves");
         move.visit(this);
 
@@ -313,7 +326,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             this.availableMoves = validMoves(this.currentPlayer);
             if (availableMoves.isEmpty()) availableMoves.add(new PassMove(currentPlayer.colour()));
             Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
-            player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
+			if (!this.gameOver) player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
 		}
         else {
             this.currentPlayer = this.mrX;
@@ -344,6 +357,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         notifyLoop(spectator -> spectator.onMoveMade(this, finalMove));
 
         if (this.currentPlayer.isDetective()) {
+        	if (this.currentPlayer.colour().equals(Blue)) {
+				System.out.println(this.currentPlayer.location());
+				System.out.println(this.mrX.location());
+			}
             if (this.currentPlayer.location() == this.mrX.location() && roundNum > 0) gameOver();
             this.mrX.addTicket(move.ticket());
         }
