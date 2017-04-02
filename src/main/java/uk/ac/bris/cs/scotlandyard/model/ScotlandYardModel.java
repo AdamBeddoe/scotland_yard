@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
@@ -140,19 +141,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	// Creates a set of valid moves for a detective.
 	private Set<Move> validMoves(ScotlandYardPlayer player) {
 
-        Set<Move> validMoves = new HashSet<>();
-        int loc = player.location();
-        Node node = this.graph.getNode(loc);
-        Collection<Edge> edges = this.graph.getEdgesFrom(node);
+		Collection<Edge<Integer,Transport>> edgesFrom = this.graph.getEdgesFrom(graph.getNode(player.location()));
 
-        for (Edge edge : edges) {
-            Transport t = (Transport) edge.data();
-            Ticket ticket = Ticket.fromTransport(t);
-            if (player.hasTickets(ticket) && !nodeOccupied(edge)) {
-                Move move = new TicketMove(player.colour(), ticket, (Integer) edge.destination().value());
-				validMoves.add(move);
-            }
-        }
+		Set<Move> validMoves = edgesFrom.parallelStream()
+				.filter(edge -> !nodeOccupied(edge))
+				.filter(edge -> player.hasTickets(Ticket.fromTransport(edge.data())))
+				.map(edge -> new TicketMove(player.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()))
+				.collect(Collectors.toSet());
 
         return validMoves;
 	}
