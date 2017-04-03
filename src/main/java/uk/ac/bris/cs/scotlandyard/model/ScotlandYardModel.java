@@ -130,7 +130,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public void startRotate() {
         if (this.gameOver) throw new IllegalStateException("Game won");
         this.playerNum = 0;
-        this.availableMoves = validMovesMrX();
+        this.availableMoves = validMoves(this.mrX);
         if (this.availableMoves.isEmpty()) gameOver();
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 		Player player = this.currentPlayer.player();
@@ -143,73 +143,64 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 		Collection<Edge<Integer,Transport>> edgesFrom = this.graph.getEdgesFrom(graph.getNode(player.location()));
 
-		Set<Move> validMoves = edgesFrom.parallelStream()
+		Set<TicketMove> firstMoves = edgesFrom.stream()
 				.filter(edge -> !nodeOccupied(edge))
-				.filter(edge -> player.hasTickets(Ticket.fromTransport(edge.data())))
 				.map(edge -> new TicketMove(player.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()))
+                .flatMap(ticketMove -> addSecretMoves(ticketMove, player).stream())
+                .filter(move -> player.hasTickets(move.ticket()))
 				.collect(Collectors.toSet());
+
+        Set<DoubleMove> doubleMoves = firstMoves.stream()
+                .flatMap(move -> doubleMovesFrom(move, player).stream())
+                .filter(doubleMove -> canUseDouble(doubleMove, player))
+                .collect(Collectors.toSet());
+
+        Set<Move> validMoves = new HashSet<>();
+        validMoves.addAll(firstMoves);
+        validMoves.addAll(doubleMoves);
 
         return validMoves;
 	}
 
-	// Creates a set of valid moves for MrX.
-    private Set<Move> validMovesMrX() {
-		Set<Move> firstMoves = validMoves(this.mrX);
-        Set<Move> validMoves = new HashSet<>();
-		int loc = this.mrX.location();
-		Node node = this.graph.getNode(loc);
+	// Returns all double moves from the firstMove
+    private Set<DoubleMove> doubleMovesFrom(TicketMove firstMove, ScotlandYardPlayer player) {
+        Collection<Edge<Integer,Transport>> edgesFrom = this.graph.getEdgesFrom(graph.getNode(firstMove.destination()));
 
-		Collection<Edge> firstEdges = this.graph.getEdgesFrom(node);
-		for (Edge firstEdge : firstEdges) {
-			if (this.mrX.hasTickets(Secret) && !nodeOccupied(firstEdge)) {
-				Move regularMove = new TicketMove(Black, Secret, (Integer) firstEdge.destination().value());
-				firstMoves.add(regularMove);
-			}
+        Set<DoubleMove> doubleMovesFrom = edgesFrom.stream()
+            .filter(edge -> !nodeOccupied(edge))
+            .map(edge -> new TicketMove(firstMove.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()))
+            .flatMap(ticketMove -> addSecretMoves(ticketMove, player).stream())
+            .map(secondMove -> new DoubleMove(firstMove.colour(), firstMove, secondMove))
+            .collect(Collectors.toSet());
 
-            if (this.mrX.hasTickets(Double) && this.roundNum <= (rounds.size()-2)) {
-                for (Move firstMove : firstMoves) {
-                    for (Move secondMove : validMovesFrom(firstMove)) {
-                        Move doubleMove = new DoubleMove(Black, (TicketMove) firstMove, (TicketMove) secondMove);
-                        validMoves.add(doubleMove);
-                    }
-                }
-            }
-		}
-        validMoves.addAll(firstMoves);
-		return validMoves;
+        return doubleMovesFrom;
     }
 
-    // Creates a set of possible further moves following each move (for double moves).
-    private Set<Move> validMovesFrom(Move move) {
-        Set<Move> validMoves = new HashSet<>();
-        if (move instanceof TicketMove) {
-            Node node = this.graph.getNode(((TicketMove) move).destination());
-            Collection<Edge> edges = this.graph.getEdgesFrom(node);
-            int numTickets;
+    // Returns a set containing the original move and the corresponding secret move if player has a secret ticket
+    private Set<TicketMove> addSecretMoves(TicketMove originalMove, ScotlandYardPlayer player) {
+	    Set<TicketMove> newMoves = new HashSet<>();
+	    newMoves.add(originalMove);
+	    if (player.hasTickets(Secret)) newMoves.add(new TicketMove(Black, Secret, originalMove.destination()));
+	    return newMoves;
+    }
 
-            for (Edge edge : edges) {
-                Transport t = (Transport) edge.data();
-                Ticket ticket = Ticket.fromTransport(t);
-                if (((TicketMove) move).ticket().equals(ticket)) numTickets = 2;
-                else numTickets = 1;
-
-                if (currentPlayer.hasTickets(ticket, numTickets)  && !nodeOccupied(edge)) {
-					Move newMove = new TicketMove(currentPlayer.colour(), ticket, (Integer) edge.destination().value());
-                    validMoves.add(newMove);
-                    if (currentPlayer.hasTickets(Secret)) {
-                        Move secretMove = new TicketMove(Black, Secret, (Integer) edge.destination().value());
-                        validMoves.add(secretMove);
-                    }
-                }
-            }
+    // Returns true if the player is able to use the double ticket
+    private boolean canUseDouble(DoubleMove doubleMove, ScotlandYardPlayer player) {
+	    boolean sameTicketValid = true;
+	    if (doubleMove.hasSameTicket()) {
+	        sameTicketValid = player.hasTickets(doubleMove.firstMove().ticket(),2);
         }
-        return validMoves;
+	    return (player.hasTickets(doubleMove.firstMove().ticket())
+                && player.hasTickets(doubleMove.secondMove().ticket())
+                && player.hasTickets(Double)
+                && this.roundNum <= (rounds.size()-2)
+                && sameTicketValid);
     }
 
     // Returns true if the destination of an edge is occupied by a detective.
 	private Boolean nodeOccupied(Edge edge) {
 		for (ScotlandYardPlayer player : playerList) {
-			if (edge.destination().value() == (Integer)player.location() && !player.isMrX()) return true;
+			if ((int)edge.destination().value() == player.location() && !player.isMrX()) return true;
 			}
 		return false;
 	}
@@ -266,7 +257,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public boolean isGameOver() {
 	    if (this.roundNum == 0) {
 	        if (this.detectivesAllStuck()) gameOver = true;
-	        if (this.validMovesMrX().isEmpty()) gameOver = true;
+	        if (this.validMoves(this.mrX).isEmpty()) gameOver = true;
         }
 		return this.gameOver;
 	}
@@ -315,7 +306,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         else {
             this.currentPlayer = this.mrX;
             if (this.roundNum >= this.rounds.size()) gameOver();
-            if (validMovesMrX().isEmpty()) gameOver();
+            if (validMoves(this.mrX).isEmpty()) gameOver();
             if (detectivesAllStuck()) gameOver();
             if (!isGameOver()) notifyLoop(spectator -> spectator.onRotationComplete(this));
 		}
