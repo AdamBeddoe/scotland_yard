@@ -1,53 +1,36 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableCollection;
-import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.Black;
-import static uk.ac.bris.cs.scotlandyard.model.Colour.Blue;
 import static uk.ac.bris.cs.scotlandyard.model.Ticket.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
-
 import uk.ac.bris.cs.gamekit.graph.Graph;
-import uk.ac.bris.cs.gamekit.graph.Node;
 
-import javax.print.attribute.standard.Destination;
-
-// TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, MoveVisitor {
-    private List<Boolean> rounds;
-    private Graph<Integer, Transport> graph;
-    private ScotlandYardPlayer mrX;
-    private PlayerConfiguration firstDetective;
-    private List<PlayerConfiguration> startPlayers = new ArrayList<>();
-    private List<ScotlandYardPlayer> playerList = new ArrayList<>();
+    private final List<Boolean> rounds;
+    private final Graph<Integer, Transport> graph;
+    private final  ScotlandYardPlayer mrX;
+    private final List<PlayerConfiguration> startPlayers = new ArrayList<>();
+    private final List<ScotlandYardPlayer> playerList = new ArrayList<>();
+	private final Set<Colour> winners = new HashSet();
     private ScotlandYardPlayer currentPlayer;
     private Set<Move> availableMoves;
-    private List<Spectator> spectators = new ArrayList<>();
+    private final List<Spectator> spectators = new ArrayList<>();
     private int roundNum = 0;
     private int playerNum = 0;
     private int lastKnownLocation = 0;
     private boolean gameOver = false;
-    private Set<Colour> winners = new HashSet();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -55,8 +38,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
                 this.rounds = requireNonNull(rounds);
                 this.graph = requireNonNull(graph);
                 this.startPlayers.add(requireNonNull(mrX));
-                this.firstDetective = requireNonNull(firstDetective);
                 this.startPlayers.add(firstDetective);
+				requireNonNull(firstDetective);
 
                 for(PlayerConfiguration detective : restOfTheDetectives) {
                 	this.startPlayers.add(requireNonNull(detective));
@@ -76,6 +59,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 				this.mrX = playerList.get(0);
 				this.currentPlayer = this.mrX;
+
+			if (this.detectivesAllStuck() || this.validMoves(this.mrX).isEmpty()) gameOver = true;
 	}
 
 	// Checks all startPlayers for duplicate locations.
@@ -140,7 +125,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	// Creates a set of valid moves for a detective.
 	private Set<Move> validMoves(ScotlandYardPlayer player) {
-
 		Collection<Edge<Integer,Transport>> edgesFrom = this.graph.getEdgesFrom(graph.getNode(player.location()));
 
 		Set<TicketMove> firstMoves = edgesFrom.stream()
@@ -255,10 +239,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public boolean isGameOver() {
-	    if (this.roundNum == 0) {
-	        if (this.detectivesAllStuck()) gameOver = true;
-	        if (this.validMoves(this.mrX).isEmpty()) gameOver = true;
-        }
 		return this.gameOver;
 	}
 
