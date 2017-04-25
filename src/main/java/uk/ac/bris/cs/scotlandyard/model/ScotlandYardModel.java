@@ -105,9 +105,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void unregisterSpectator(Spectator spectator) {
-		if (!spectators.contains((requireNonNull(spectator)))) throw new IllegalArgumentException("Not an existing spectator");
+		if (!spectators.contains(requireNonNull(spectator))) throw new IllegalArgumentException("Not an existing spectator");
 		else {
-			spectators.remove(requireNonNull(spectator));
+			spectators.remove(spectator);
 		}
 	}
 
@@ -339,6 +339,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         notifyLoop(spectator -> spectator.onMoveMade(this, move));
     }
 
+    // Sets game to be over, notifies players
     private void gameOver() {
 	    this.gameOver = true;
 	    if (this.currentPlayer.isMrX()) this.winners.add(Black);
@@ -350,6 +351,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         notifyLoop(spectator -> spectator.onGameOver(this, this.winners));
     }
 
+    // Checks whether all detectives have any valid moves
     private boolean detectivesAllStuck() {
 	    boolean areStuck = true;
 	    for (ScotlandYardPlayer player : playerList) {
