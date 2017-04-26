@@ -23,7 +23,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     private final  ScotlandYardPlayer mrX;
     private final List<PlayerConfiguration> startPlayers = new ArrayList<>();
     private final List<ScotlandYardPlayer> playerList = new ArrayList<>();
-	private final Set<Colour> winners = new HashSet();
+	private final Set<Colour> winners = new HashSet<>();
     private ScotlandYardPlayer currentPlayer;
     private Set<Move> availableMoves;
     private final List<Spectator> spectators = new ArrayList<>();
@@ -119,7 +119,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         if (this.availableMoves.isEmpty()) gameOver();
 		Set<Move> playerMoves = unmodifiableSet(this.availableMoves);
 		Player player = this.currentPlayer.player();
-        notifyLoop(spectator -> spectator.onRoundStarted(this, getCurrentRound()));
+        this.spectators.forEach(spectator -> spectator.onRoundStarted(this, getCurrentRound()));
         player.makeMove(this, this.currentPlayer.location(), playerMoves, this);
 	}
 
@@ -150,14 +150,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     private Set<DoubleMove> doubleMovesFrom(TicketMove firstMove, ScotlandYardPlayer player) {
         Collection<Edge<Integer,Transport>> edgesFrom = this.graph.getEdgesFrom(graph.getNode(firstMove.destination()));
 
-        Set<DoubleMove> doubleMovesFrom = edgesFrom.stream()
+        return edgesFrom.stream()
             .filter(edge -> !nodeOccupied(edge))
             .map(edge -> new TicketMove(firstMove.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()))
             .flatMap(ticketMove -> addSecretMoves(ticketMove, player).stream())
             .map(secondMove -> new DoubleMove(firstMove.colour(), firstMove, secondMove))
             .collect(Collectors.toSet());
-
-        return doubleMovesFrom;
     }
 
     // Returns a set containing the original move and the corresponding secret move if player has a secret ticket
@@ -288,7 +286,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             if (this.roundNum >= this.rounds.size()) gameOver();
             if (validMoves(this.mrX).isEmpty()) gameOver();
             if (detectivesAllStuck()) gameOver();
-            if (!isGameOver()) notifyLoop(spectator -> spectator.onRotationComplete(this));
+            if (!isGameOver()) this.spectators.forEach(spectator -> spectator.onRotationComplete(this));
 		}
     }
 
@@ -305,11 +303,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             	newMove = new TicketMove(Black, move.ticket(), this.lastKnownLocation);
 			}
             this.roundNum++;
-            notifyLoop(spectator -> spectator.onRoundStarted(this, roundNum));
+            this.spectators.forEach(spectator -> spectator.onRoundStarted(this, roundNum));
         }
 
 		final TicketMove finalMove = newMove;
-        notifyLoop(spectator -> spectator.onMoveMade(this, finalMove));
+        this.spectators.forEach(spectator -> spectator.onMoveMade(this, finalMove));
 
         if (this.currentPlayer.isDetective()) {
 
@@ -330,13 +328,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 		DoubleMove newMove = new DoubleMove(Black, move.firstMove().ticket(), dest1, move.secondMove().ticket(), dest2);
 
-		notifyLoop(spectator -> spectator.onMoveMade(this, newMove));
+		this.spectators.forEach(spectator -> spectator.onMoveMade(this, newMove));
 		move.firstMove().visit(this);
 		move.secondMove().visit(this);
 	}
 
     public void visit(PassMove move) {
-        notifyLoop(spectator -> spectator.onMoveMade(this, move));
+        this.spectators.forEach(spectator -> spectator.onMoveMade(this, move));
     }
 
     // Sets game to be over, notifies players
@@ -348,7 +346,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	            if (player.colour() != Black) this.winners.add(player.colour());
             }
         }
-        notifyLoop(spectator -> spectator.onGameOver(this, this.winners));
+        this.spectators.forEach(spectator -> spectator.onGameOver(this, this.winners));
     }
 
     // Checks whether all detectives have any valid moves
@@ -359,14 +357,4 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         }
         return areStuck;
     }
-
-    private void notifyLoop(NotifyFunction function) {
-        for (Spectator spectator : spectators){
-            function.notifyFunc(spectator);
-        }
-    }
-}
-
-interface NotifyFunction {
-	void notifyFunc(Spectator spectator);
 }
